@@ -561,7 +561,8 @@
             <option value="QRIS NEXUSPAY">QRIS NEXUSPAY</option>
             <option value="QRIS RPAY">QRIS RPAY</option>
             <option value="QRIS MVP">QRIS MVP</option>
-            <option value="QRIS UNOPAY">QRIS UNOPAY</option>
+            <option value="QRIS DANA">QRIS DANA</option>
+            <option value="QRIS OVO">QRIS OVO</option>
           </select>
         </div>
 
@@ -609,6 +610,19 @@ var TOKO_MAP = {
 };
 
 function getTokoName(tokoValue) { return TOKO_MAP[tokoValue] || tokoValue; }
+
+// Konversi tanggal YYYY-MM-DD ke DD/MM/YYYY untuk tampilan
+function formatTanggal(tanggalDB) {
+  if (!tanggalDB) return '';
+  // Kalau sudah format DD/MM/YYYY, return apa adanya
+  if (tanggalDB.includes('/')) return tanggalDB;
+  // Konversi YYYY-MM-DD ke DD/MM/YYYY
+  var parts = tanggalDB.split('-');
+  if (parts.length === 3) {
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  return tanggalDB;
+}
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -747,9 +761,8 @@ document.getElementById('form-lapor').addEventListener('submit', async function(
     showAlert('error', '❌ Tanggal transfer harus diisi');
     return;
   }
-  // Konversi YYYY-MM-DD ke DD/MM/YYYY
-  var parts = tanggalInput.split('-');
-  var tanggalFormatted = parts[2] + '/' + parts[1] + '/' + parts[0];
+  // Simpan tanggal dalam format YYYY-MM-DD (format PostgreSQL)
+  var tanggalFormatted = tanggalInput;
   
   var btn = document.getElementById('btn-submit');
   btn.disabled = true;
@@ -892,6 +905,9 @@ function renderLaporan(l) {
       '🗑️ <strong>Foto bukti telah dihapus</strong><br><small>(Transaksi sudah selesai diproses)</small></div>';
   }
   
+  // Format tanggal ke DD/MM/YYYY untuk tampilan
+  var tanggalDisplay = formatTanggal(l.tanggal_transfer);
+  
   return '<div class="report-card">' +
     '<h3>📋 Laporan - ' + escapeHtml(getTokoName(l.toko)) + '</h3>' +
     '<span class="status-badge ' + s.class + '">' + s.label + '</span>' +
@@ -902,7 +918,7 @@ function renderLaporan(l) {
       '<div class="detail-item"><div class="k">Merchant</div><div class="v">' + escapeHtml(l.nama_merchant) + '</div></div>' +
       '<div class="detail-item"><div class="k">RRN QRIS</div><div class="v">' + escapeHtml(l.rrn_qris) + '</div></div>' +
       '<div class="detail-item"><div class="k">Jenis QRIS</div><div class="v">' + escapeHtml(l.jenis_qris) + '</div></div>' +
-      '<div class="detail-item"><div class="k">Tanggal</div><div class="v">' + escapeHtml(l.tanggal_transfer) + ' ' + escapeHtml(l.jam_transfer) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Tanggal</div><div class="v">' + escapeHtml(tanggalDisplay) + ' ' + escapeHtml(l.jam_transfer) + '</div></div>' +
       '<div class="detail-item"><div class="k">Dilaporkan</div><div class="v">' + new Date(l.created_at).toLocaleString('id-ID') + '</div></div>' +
     '</div>' +
     fotoHtml +
