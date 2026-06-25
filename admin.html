@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e293b">
+<title>Admin - Lapor Kendala QRIS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: #f1f5f9; min-height: 100vh; padding: 12px; color: #333; }
+  @media (min-width: 640px) { body { padding: 20px; } }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1e293b, #475569);
+    color: white; padding: 16px; border-radius: 12px; margin-bottom: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .header { padding: 24px; border-radius: 16px; margin-bottom: 20px; }
+  }
+  .header h1 { font-size: 18px; }
+  @media (min-width: 640px) { .header h1 { font-size: 22px; } }
+  .header button {
+    padding: 8px 14px; background: #ef4444; color: white;
+    border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+    font-size: 13px;
+  }
+  @media (min-width: 640px) {
+    .header button { padding: 8px 16px; font-size: 14px; }
+  }
+
+  .login-box {
+    max-width: 400px; margin: 60px auto; background: white;
+    padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  }
+  @media (min-width: 640px) { .login-box { margin: 80px auto; padding: 40px; } }
+  .login-box h2 { margin-bottom: 20px; text-align: center; font-size: 20px; }
+  .login-box input {
+    width: 100%; padding: 12px; border: 2px solid #e2e8f0;
+    border-radius: 8px; margin-bottom: 12px; font-size: 14px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .login-box input:focus { outline: none; border-color: #4f46e5; }
+  .login-box button {
+    width: 100%; padding: 12px; background: #4f46e5; color: white;
+    border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+    font-size: 15px;
+  }
+  .login-box button:active { transform: scale(0.98); }
+  .login-error { color: #ef4444; text-align: center; margin-top: 10px; font-size: 13px; min-height: 20px; }
+
+  .stats-bar {
+    background: white; padding: 12px; border-radius: 12px; margin-bottom: 12px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  }
+  @media (min-width: 640px) {
+    .stats-bar { padding: 16px; margin-bottom: 16px; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  }
+  .stat-item {
+    padding: 10px; background: #f8fafc; border-radius: 8px;
+    border-left: 4px solid #4f46e5;
+  }
+  @media (min-width: 640px) { .stat-item { padding: 12px; } }
+  .stat-item .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  @media (min-width: 640px) { .stat-item .label { font-size: 11px; } }
+  .stat-item .value { font-size: 18px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+  @media (min-width: 640px) { .stat-item .value { font-size: 20px; margin-top: 4px; } }
+
+  .filter-bar {
+    background: white; padding: 12px; border-radius: 12px; margin-bottom: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  @media (min-width: 640px) {
+    .filter-bar { padding: 16px; margin-bottom: 16px; flex-direction: row; flex-wrap: wrap; }
+  }
+  .filter-bar select, .filter-bar input {
+    padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;
+    width: 100%; -webkit-appearance: none; appearance: none;
+  }
+  @media (min-width: 640px) {
+    .filter-bar select, .filter-bar input { width: auto; flex: 1; min-width: 150px; }
+  }
+  .filter-bar select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%2364748b' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  .filter-bar select:focus, .filter-bar input:focus {
+    outline: none; border-color: #4f46e5;
+  }
+  .filter-bar .count {
+    padding: 10px 16px; background: #eef2ff;
+    color: #4f46e5; border-radius: 8px; font-weight: 700;
+    text-align: center; font-size: 14px;
+  }
+  @media (min-width: 640px) {
+    .filter-bar .count { margin-left: auto; }
+  }
+
+  .report-list { display: flex; flex-direction: column; gap: 10px; }
+  @media (min-width: 640px) { .report-list { gap: 12px; } }
+  .report-item {
+    background: white; border-radius: 12px; padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  @media (min-width: 640px) { .report-item { padding: 20px; } }
+  .report-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+  }
+  @media (min-width: 640px) { .report-head { margin-bottom: 12px; } }
+  .report-head h3 { font-size: 15px; word-break: break-word; flex: 1; min-width: 0; }
+  @media (min-width: 640px) { .report-head h3 { font-size: 16px; } }
+  .report-head small { color: #64748b; font-size: 11px; display: block; margin-top: 4px; word-break: break-all; }
+  @media (min-width: 640px) { .report-head small { font-size: 12px; } }
+  
+  .status-badge {
+    padding: 5px 10px; border-radius: 20px; font-size: 10px;
+    font-weight: 700; text-transform: uppercase; white-space: nowrap;
+  }
+  @media (min-width: 640px) {
+    .status-badge { padding: 6px 12px; font-size: 11px; }
+  }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-progress { background: #dbeafe; color: #1e40af; }
+  .badge-waiting { background: #fed7aa; color: #9a3412; }
+  .badge-success { background: #d1fae5; color: #065f46; }
+
+  .report-detail {
+    display: grid; grid-template-columns: 1fr;
+    gap: 8px; margin: 10px 0; padding: 10px; background: #f8fafc;
+    border-radius: 8px; font-size: 12px;
+  }
+  @media (min-width: 640px) {
+    .report-detail { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 12px 0; padding: 12px; font-size: 13px; }
+  }
+  .report-detail div strong { color: #64748b; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 2px; }
+  @media (min-width: 640px) { .report-detail div strong { font-size: 11px; } }
+  .report-detail div { word-break: break-word; }
+
+  .report-actions {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid #e2e8f0;
+  }
+  @media (min-width: 640px) {
+    .report-actions { gap: 8px; margin-top: 12px; padding-top: 12px; }
+  }
+  .report-actions button {
+    padding: 8px 12px; font-size: 11px; border: none;
+    border-radius: 6px; cursor: pointer; font-weight: 600;
+    flex: 1; min-width: 80px;
+  }
+  @media (min-width: 640px) {
+    .report-actions button { padding: 8px 14px; font-size: 12px; flex: none; min-width: auto; }
+  }
+  .report-actions button:active { transform: scale(0.96); }
+  .btn-progress { background: #dbeafe; color: #1e40af; }
+  .btn-waiting { background: #fed7aa; color: #9a3412; }
+  .btn-success { background: #d1fae5; color: #065f46; }
+  .btn-note { background: #e0e7ff; color: #4338ca; }
+  .btn-delete { background: #fee2e2; color: #991b1b; }
+
+  .foto-thumb {
+    max-width: 100px; max-height: 100px; border-radius: 8px;
+    cursor: pointer; border: 1px solid #e2e8f0; display: block;
+    margin-top: 8px;
+  }
+  @media (min-width: 640px) {
+    .foto-thumb { max-width: 120px; max-height: 120px; }
+  }
+  .foto-deleted {
+    padding: 10px; background: #f1f5f9; border-radius: 8px;
+    color: #64748b; font-size: 11px; font-style: italic;
+    border: 1px dashed #cbd5e1; display: inline-block;
+    margin-top: 8px;
+  }
+  @media (min-width: 640px) {
+    .foto-deleted { padding: 12px; font-size: 12px; }
+  }
+
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+    z-index: 1000; align-items: center; justify-content: center; padding: 15px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: white; border-radius: 12px; padding: 20px;
+    max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  @media (min-width: 640px) { .modal { border-radius: 16px; padding: 24px; } }
+  .modal h3 { margin-bottom: 14px; font-size: 17px; }
+  @media (min-width: 640px) { .modal h3 { font-size: 18px; margin-bottom: 16px; } }
+  .modal textarea {
+    width: 100%; padding: 12px; border: 2px solid #e2e8f0;
+    border-radius: 8px; min-height: 100px; font-family: inherit; margin-bottom: 12px;
+    font-size: 14px; resize: vertical;
+  }
+  .modal textarea:focus { outline: none; border-color: #4f46e5; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-actions button {
+    padding: 10px 18px; border: none; border-radius: 8px;
+    cursor: pointer; font-weight: 600; font-size: 14px;
+  }
+  .modal-actions button:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <h2>🔐 Admin Login</h2>
+    <input type="text" id="u" placeholder="Username" autocomplete="username">
+    <input type="password" id="p" placeholder="Password" autocomplete="current-password">
+    <button onclick="login()">Login</button>
+    <p class="login-error" id="err"></p>
+  </div>
+</div>
+
+<div id="admin-screen" style="display:none">
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>📊 Dashboard Admin - Lapor QRIS</h1>
+        <small style="opacity:0.8">Kelola semua laporan kendala QRIS</small>
+      </div>
+      <button onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="label">Total</div>
+        <div class="value" id="stat-total">0</div>
+      </div>
+      <div class="stat-item" style="border-left-color:#f59e0b">
+        <div class="label">Pending</div>
+        <div class="value" id="stat-pending">0</div>
+      </div>
+      <div class="stat-item" style="border-left-color:#3b82f6">
+        <div class="label">Progress</div>
+        <div class="value" id="stat-progress">0</div>
+      </div>
+      <div class="stat-item" style="border-left-color:#f97316">
+        <div class="label">H+1</div>
+        <div class="value" id="stat-waiting">0</div>
+      </div>
+      <div class="stat-item" style="border-left-color:#10b981;grid-column:span 2">
+        <div class="label">Sukses</div>
+        <div class="value" id="stat-success">0</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <select id="filter-status" onchange="loadReports()">
+        <option value="">Semua Status</option>
+        <option value="pending">Pending</option>
+        <option value="on_progress">On Progress</option>
+        <option value="menunggu_h1">Menunggu H+1</option>
+        <option value="sukses">Sukses</option>
+      </select>
+      <select id="filter-toko" onchange="loadReports()">
+        <option value="">Semua Toko</option>
+        <option value="Toko 1">WG77</option>
+        <option value="Toko 2">SENSATIONAL77</option>
+        <option value="Toko 3">CITRA77</option>
+        <option value="Toko 4">MAXWIN77</option>
+        <option value="Toko 5">HOKIWIN77</option>
+        <option value="Toko 6">MAXWIN25</option>
+        <option value="Toko 7">LUMBUNG138</option>
+        <option value="Toko 8">SPONTAN77</option>
+        <option value="Toko 9">ASIAHOKI77</option>
+        <option value="Toko 10">MULIA77</option>
+        <option value="Toko 11">BOSWIN77</option>
+        <option value="Toko 12">LAUTAN77</option>
+        <option value="Toko 13">SLOT25</option>
+        <option value="Toko 14">WIN25</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="🔍 Cari User ID / Merchant / RRN / Toko..." oninput="loadReports()">
+      <div class="count" id="report-count">0 laporan</div>
+    </div>
+
+    <div class="report-list" id="report-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-note">
+  <div class="modal">
+    <h3>📝 Tambah Catatan Admin</h3>
+    <textarea id="note-text" placeholder="Tulis catatan untuk laporan ini..."></textarea>
+    <div class="modal-actions">
+      <button onclick="closeModal()" style="background:#e2e8f0">Batal</button>
+      <button onclick="saveNote()" style="background:#4f46e5;color:white">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var ADMIN_USER = 'admin';
+var ADMIN_PASS = 'admin123'; // ⚠️ GANTI PASSWORD INI!
+
+var SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c3RqbHVrcmZ5ZXp0Ym51dGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTgxOTksImV4cCI6MjA5NzkzNDE5OX0.mc7cOloETrfwr8jJ-kQDhHq8XEoQ-J2hfBHJKRXTvcQ';
+
+var currentNoteId = null;
+
+var TOKO_MAP = {
+  'Toko 1': 'WG77', 'Toko 2': 'SENSATIONAL77', 'Toko 3': 'CITRA77',
+  'Toko 4': 'MAXWIN77', 'Toko 5': 'HOKIWIN77', 'Toko 6': 'MAXWIN25',
+  'Toko 7': 'LUMBUNG138', 'Toko 8': 'SPONTAN77', 'Toko 9': 'ASIAHOKI77',
+  'Toko 10': 'MULIA77', 'Toko 11': 'BOSWIN77', 'Toko 12': 'LAUTAN77',
+  'Toko 13': 'SLOT25', 'Toko 14': 'WIN25'
+};
+
+function getTokoName(tokoValue) { return TOKO_MAP[tokoValue] || tokoValue; }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+async function supabaseQuery(endpoint, options) {
+  var url = SUPABASE_URL + '/rest/v1/' + endpoint;
+  var defaultOptions = {
+    method: 'GET',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    }
+  };
+  var finalOptions = Object.assign({}, defaultOptions, options);
+  if (options && options.headers) {
+    finalOptions.headers = Object.assign({}, defaultOptions.headers, options.headers);
+  }
+  var response = await fetch(url, finalOptions);
+  if (!response.ok) {
+    var errorText = await response.text();
+    throw new Error('HTTP ' + response.status + ': ' + errorText);
+  }
+  var text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function extractFilename(fotoUrl) {
+  if (!fotoUrl) return null;
+  var parts = fotoUrl.split('/');
+  return parts[parts.length - 1];
+}
+
+async function deleteFoto(fotoUrl) {
+  if (!fotoUrl) return true;
+  var filename = extractFilename(fotoUrl);
+  if (!filename) return false;
+  try {
+    var url = SUPABASE_URL + '/storage/v1/object/bukti-qris/' + filename;
+    var response = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    return response.ok || response.status === 404;
+  } catch (e) {
+    console.error('Delete foto error:', e);
+    return false;
+  }
+}
+
+function login() {
+  var username = document.getElementById('u').value;
+  var password = document.getElementById('p').value;
+  var err = document.getElementById('err');
+  err.textContent = '';
+  if (!username || !password) {
+    err.textContent = '❌ Username dan password harus diisi!';
+    return;
+  }
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    try { localStorage.setItem('admin_logged_in', 'true'); } catch(e) {}
+    showDashboard();
+  } else {
+    err.textContent = '❌ Username atau password salah!';
+  }
+}
+
+function logout() {
+  try { localStorage.removeItem('admin_logged_in'); } catch(e) {}
+  location.reload();
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  loadReports();
+}
+
+try {
+  if (localStorage.getItem('admin_logged_in') === 'true') showDashboard();
+} catch(e) {}
+
+document.getElementById('p').onkeypress = function(e) {
+  if (e.key === 'Enter') login();
+};
+
+async function loadReports() {
+  var status = document.getElementById('filter-status').value;
+  var toko = document.getElementById('filter-toko').value;
+  var search = document.getElementById('filter-search').value.toLowerCase();
+  
+  var query = 'laporan?select=*&order=created_at.desc';
+  if (status) query += '&status=eq.' + status;
+  if (toko) query += '&toko=eq.' + encodeURIComponent(toko);
+  
+  try {
+    var data = await supabaseQuery(query);
+    var filtered = data || [];
+    updateStats(data || []);
+    
+    if (search) {
+      filtered = filtered.filter(function(d) {
+        var tokoName = getTokoName(d.toko) || '';
+        return (d.user_id || '').toLowerCase().includes(search) ||
+               (d.nama_merchant || '').toLowerCase().includes(search) ||
+               (d.rrn_qris || '').toLowerCase().includes(search) ||
+               tokoName.toLowerCase().includes(search);
+      });
+    }
+    
+    document.getElementById('report-count').textContent = filtered.length + ' laporan';
+    
+    if (filtered.length === 0) {
+      document.getElementById('report-list').innerHTML = '<p style="text-align:center;padding:40px;color:#64748b">📭 Tidak ada laporan</p>';
+      return;
+    }
+    
+    document.getElementById('report-list').innerHTML = filtered.map(renderReport).join('');
+  } catch (e) {
+    document.getElementById('report-list').innerHTML = '<p style="color:red;padding:20px">❌ Error: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+function updateStats(data) {
+  document.getElementById('stat-total').textContent = data.length;
+  document.getElementById('stat-pending').textContent = data.filter(function(d) { return d.status === 'pending'; }).length;
+  document.getElementById('stat-progress').textContent = data.filter(function(d) { return d.status === 'on_progress'; }).length;
+  document.getElementById('stat-waiting').textContent = data.filter(function(d) { return d.status === 'menunggu_h1'; }).length;
+  document.getElementById('stat-success').textContent = data.filter(function(d) { return d.status === 'sukses'; }).length;
+}
+
+function renderReport(r) {
+  var statusMap = {
+    'pending': { label: 'PENDING', class: 'badge-pending' },
+    'on_progress': { label: 'ON PROGRESS', class: 'badge-progress' },
+    'menunggu_h1': { label: 'MENUNGGU H+1', class: 'badge-waiting' },
+    'sukses': { label: 'SELESAI', class: 'badge-success' }
+  };
+  var s = statusMap[r.status] || statusMap['pending'];
+  
+  var catatanHtml = r.catatan_admin ? 
+    '<div style="grid-column:1/-1"><strong>Catatan Admin</strong>' + escapeHtml(r.catatan_admin) + '</div>' : '';
+  
+  var fotoHtml = '';
+  if (r.foto_bukti) {
+    fotoHtml = '<a href="' + escapeHtml(r.foto_bukti) + '" target="_blank"><img src="' + escapeHtml(r.foto_bukti) + '" class="foto-thumb" alt="Bukti"></a>';
+  } else {
+    fotoHtml = '<div class="foto-deleted">🗑️ Foto telah dihapus (transaksi selesai)</div>';
+  }
+  
+  var actions = '';
+  if (r.status !== 'on_progress') actions += '<button class="btn-progress" onclick="updateStatus(\'' + r.id + '\',\'on_progress\')">▶️ Progress</button>';
+  if (r.status !== 'menunggu_h1') actions += '<button class="btn-waiting" onclick="updateStatus(\'' + r.id + '\',\'menunggu_h1\')">⏰ H+1</button>';
+  if (r.status !== 'sukses') actions += '<button class="btn-success" onclick="updateStatus(\'' + r.id + '\',\'sukses\')">✅ Sukses</button>';
+  actions += '<button class="btn-note" onclick="openNote(\'' + r.id + '\')">📝 Catatan</button>';
+  actions += '<button class="btn-delete" onclick="deleteReport(\'' + r.id + '\')">🗑️ Hapus</button>';
+  
+  return '<div class="report-item">' +
+    '<div class="report-head">' +
+      '<div style="flex:1;min-width:0">' +
+        '<h3>' + escapeHtml(getTokoName(r.toko)) + ' - ' + escapeHtml(r.nama_merchant) + '</h3>' +
+        '<small>User ID: <strong>' + escapeHtml(r.user_id) + '</strong> | ' + new Date(r.created_at).toLocaleString('id-ID') + '</small>' +
+      '</div>' +
+      '<span class="status-badge ' + s.class + '">' + s.label + '</span>' +
+    '</div>' +
+    '<div class="report-detail">' +
+      '<div><strong>RRN QRIS</strong>' + escapeHtml(r.rrn_qris) + '</div>' +
+      '<div><strong>Jenis QRIS</strong>' + escapeHtml(r.jenis_qris) + '</div>' +
+      '<div><strong>Tanggal Transfer</strong>' + escapeHtml(r.tanggal_transfer) + ' ' + escapeHtml(r.jam_transfer) + '</div>' +
+      catatanHtml +
+    '</div>' +
+    fotoHtml +
+    '<div class="report-actions">' + actions + '</div>' +
+  '</div>';
+}
+
+async function updateStatus(id, status) {
+  var confirmMsg = 'Ubah status menjadi ' + status + '?';
+  if (status === 'sukses') {
+    confirmMsg += '\n\n⚠️ PERHATIAN:\nFoto bukti akan dihapus otomatis untuk menghemat storage.\nData laporan tetap tersimpan untuk histori.\n\nLanjutkan?';
+  }
+  if (!confirm(confirmMsg)) return;
+  try {
+    if (status === 'sukses') {
+      var data = await supabaseQuery('laporan?id=eq.' + id + '&select=foto_bukti');
+      if (data && data[0] && data[0].foto_bukti) await deleteFoto(data[0].foto_bukti);
+      await supabaseQuery('laporan?id=eq.' + id, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: status, foto_bukti: null, updated_at: new Date().toISOString() })
+      });
+    } else {
+      await supabaseQuery('laporan?id=eq.' + id, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: status, updated_at: new Date().toISOString() })
+      });
+    }
+    loadReports();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function openNote(id) {
+  currentNoteId = id;
+  try {
+    var data = await supabaseQuery('laporan?id=eq.' + id + '&select=catatan_admin');
+    var note = (data && data[0] && data[0].catatan_admin) || '';
+    document.getElementById('note-text').value = note;
+    document.getElementById('modal-note').classList.add('active');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-note').classList.remove('active');
+}
+
+async function saveNote() {
+  var note = document.getElementById('note-text').value;
+  if (!currentNoteId) {
+    alert('Error: ID laporan tidak ditemukan');
+    return;
+  }
+  try {
+    await supabaseQuery('laporan?id=eq.' + currentNoteId, {
+      method: 'PATCH',
+      body: JSON.stringify({ catatan_admin: note, updated_at: new Date().toISOString() })
+    });
+    closeModal();
+    loadReports();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function deleteReport(id) {
+  if (!confirm('Yakin hapus laporan ini?\nFoto dan semua data akan dihapus PERMANEN!')) return;
+  try {
+    var data = await supabaseQuery('laporan?id=eq.' + id + '&select=foto_bukti');
+    if (data && data[0] && data[0].foto_bukti) await deleteFoto(data[0].foto_bukti);
+    await supabaseQuery('laporan?id=eq.' + id, { method: 'DELETE' });
+    loadReports();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+</script>
+
+</body>
+</html>

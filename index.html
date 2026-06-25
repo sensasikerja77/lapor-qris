@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4f46e5">
+<title>Lapor Kendala QRIS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 12px;
+    color: #333;
+  }
+  @media (min-width: 640px) { body { padding: 20px; } }
+  
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  @media (max-width: 640px) { .container { border-radius: 12px; } }
+  
+  .header {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 22px; margin-bottom: 6px; }
+  .header p { opacity: 0.9; font-size: 13px; }
+  @media (min-width: 640px) {
+    .header { padding: 30px; }
+    .header h1 { font-size: 28px; }
+    .header p { font-size: 14px; }
+  }
+  
+  .nav {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .nav button {
+    flex: 1;
+    padding: 14px 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+  }
+  @media (min-width: 640px) {
+    .nav button { padding: 16px; font-size: 14px; }
+  }
+  .nav button.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+    background: white;
+  }
+  
+  .content { padding: 20px; }
+  @media (min-width: 640px) { .content { padding: 30px; } }
+  
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.4s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .form-group { margin-bottom: 16px; }
+  @media (min-width: 640px) { .form-group { margin-bottom: 18px; } }
+  
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #334155;
+    font-size: 13px;
+  }
+  @media (min-width: 640px) { label { font-size: 14px; } }
+  
+  label .req { color: #ef4444; }
+  
+  input[type="text"], input[type="date"], input[type="time"], select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #f8fafc;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  @media (min-width: 640px) {
+    input[type="text"], input[type="date"], input[type="time"], select { padding: 12px 14px; }
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  }
+  select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%2364748b' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  
+  .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 640px) { 
+    .row { grid-template-columns: 1fr 1fr; gap: 14px; }
+  }
+
+  .file-upload {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: all 0.2s;
+  }
+  @media (min-width: 640px) { .file-upload { padding: 24px; } }
+  .file-upload:hover { border-color: #4f46e5; background: #eef2ff; }
+  .file-upload.has-file { border-color: #10b981; background: #ecfdf5; }
+  .file-upload .icon { font-size: 32px; margin-bottom: 6px; }
+  @media (min-width: 640px) { .file-upload .icon { font-size: 36px; margin-bottom: 8px; } }
+  .file-upload p { font-size: 12px; color: #64748b; line-height: 1.5; }
+  @media (min-width: 640px) { .file-upload p { font-size: 13px; } }
+  .file-upload .filename { 
+    color: #10b981; 
+    font-weight: 600; 
+    margin-top: 6px; 
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  .paste-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #eef2ff;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #4338ca;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .paste-info kbd {
+    background: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 10px;
+  }
+
+  .preview-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    max-width: 100%;
+  }
+  .preview-img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    display: block;
+  }
+  .btn-remove-foto {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    background: #ef4444;
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .btn-remove-foto:active { transform: scale(0.9); }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  @media (min-width: 640px) {
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(79,70,229,0.3); }
+  }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .alert {
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+    line-height: 1.5;
+  }
+  @media (min-width: 640px) {
+    .alert { padding: 14px 18px; font-size: 14px; }
+  }
+  .alert.success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+  .alert.error { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+  .alert.info { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+  .info-box {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #78350f;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  @media (min-width: 640px) {
+    .info-box { padding: 12px 16px; font-size: 13px; }
+  }
+
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 20px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0; right: 0;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 0;
+  }
+  .timeline-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    flex: 1;
+  }
+  .timeline-step .circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 6px;
+    font-weight: 700;
+    font-size: 12px;
+    border: 3px solid white;
+  }
+  @media (min-width: 640px) {
+    .timeline-step .circle { width: 32px; height: 32px; font-size: 14px; }
+  }
+  .timeline-step.active .circle {
+    background: #4f46e5;
+    color: white;
+    box-shadow: 0 0 0 2px #4f46e5;
+  }
+  .timeline-step.done .circle {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 0 0 2px #10b981;
+  }
+  .timeline-step .label {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  @media (min-width: 640px) {
+    .timeline-step .label { font-size: 11px; }
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-progress { background: #dbeafe; color: #1e40af; }
+  .badge-waiting { background: #fed7aa; color: #9a3412; }
+  .badge-success { background: #d1fae5; color: #065f46; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  @media (min-width: 640px) {
+    .detail-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  }
+  .detail-item {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+  @media (min-width: 640px) { .detail-item { padding: 12px; } }
+  .detail-item .k { 
+    font-size: 10px; 
+    color: #64748b; 
+    text-transform: uppercase; 
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  @media (min-width: 640px) { .detail-item .k { font-size: 11px; } }
+  .detail-item .v { 
+    font-size: 13px; 
+    color: #1e293b; 
+    font-weight: 600; 
+    word-break: break-all;
+  }
+  @media (min-width: 640px) { .detail-item .v { font-size: 14px; } }
+
+  .report-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 14px;
+  }
+  @media (min-width: 640px) {
+    .report-card { padding: 20px; margin-top: 16px; }
+  }
+  .report-card h3 { 
+    font-size: 15px; 
+    margin-bottom: 10px; 
+    word-break: break-word;
+  }
+  @media (min-width: 640px) { .report-card h3 { font-size: 16px; } }
+
+  .loading {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .drag-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(79, 70, 229, 0.95);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    pointer-events: none;
+  }
+  .drag-overlay.active { display: flex; }
+  .drag-overlay span { font-size: 14px; margin-top: 10px; opacity: 0.9; }
+
+  .foto-bukti-thumb {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: block;
+  }
+  .foto-bukti-thumb:active { transform: scale(0.98); }
+  @media (min-width: 640px) {
+    .foto-bukti-thumb:hover {
+      border-color: #4f46e5;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+      transform: translateY(-2px);
+    }
+  }
+  .foto-bukti-label {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .lightbox {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+  .lightbox.active { display: flex; }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 15px; right: 15px;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 44px; height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+  }
+  .lightbox-close:active { background: rgba(255,255,255,0.3); }
+  .lightbox-caption {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0,0,0,0.7);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    max-width: 90%;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>📱 Lapor Kendala QRIS</h1>
+    <p>Laporkan masalah transaksi QRIS Anda dengan mudah</p>
+  </div>
+
+  <div class="nav">
+    <button class="active" onclick="showPage('lapor', this)">📝 Buat Laporan</button>
+    <button onclick="showPage('cek', this)">🔍 Cek Status</button>
+  </div>
+
+  <div class="content">
+    <div id="page-lapor" class="page active">
+      <div class="info-box">
+        ⚠️ <strong>Perhatian:</strong> Pastikan foto bukti transfer terlihat jelas: nominal, tanggal, jam, nama merchant, dan RRN QRIS
+      </div>
+
+      <div id="alert-lapor" class="alert"></div>
+
+      <form id="form-lapor" autocomplete="off">
+        <div class="form-group">
+          <label>Foto Bukti Transfer <span class="req">*</span></label>
+          <div class="file-upload" id="drop-zone" onclick="document.getElementById('foto').click()">
+            <div class="icon">📷</div>
+            <p>Klik untuk upload, atau <strong>paste screenshot</strong> (Ctrl+V)</p>
+            <div class="filename" id="foto-name"></div>
+            <input type="file" id="foto" accept="image/*" style="display:none">
+          </div>
+          <div class="paste-info">
+            💡 <strong>Tip:</strong> Tekan <kbd>Ctrl</kbd>+<kbd>V</kbd> (Windows) atau <kbd>Cmd</kbd>+<kbd>V</kbd> (Mac) untuk paste screenshot
+          </div>
+          <div class="preview-container" id="preview-container" style="display:none">
+            <img id="foto-preview" class="preview-img">
+            <button type="button" class="btn-remove-foto" onclick="removeFoto()" title="Hapus foto">✕</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Nama Merchant <span class="req">*</span></label>
+          <input type="text" id="nama-merchant" placeholder="Contoh: Toko Sejahtera" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>User ID Player <span class="req">*</span></label>
+          <input type="text" id="user-id" placeholder="Masukkan User ID Anda" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>Pilih Toko <span class="req">*</span></label>
+          <select id="toko" required>
+            <option value="">-- Pilih Toko --</option>
+            <option value="Toko 1">WG77</option>
+            <option value="Toko 2">SENSATIONAL77</option>
+            <option value="Toko 3">CITRA77</option>
+            <option value="Toko 4">MAXWIN77</option>
+            <option value="Toko 5">HOKIWIN77</option>
+            <option value="Toko 6">MAXWIN25</option>
+            <option value="Toko 7">LUMBUNG138</option>
+            <option value="Toko 8">SPONTAN77</option>
+            <option value="Toko 9">ASIAHOKI77</option>
+            <option value="Toko 10">MULIA77</option>
+            <option value="Toko 11">BOSWIN77</option>
+            <option value="Toko 12">LAUTAN77</option>
+            <option value="Toko 13">SLOT25</option>
+            <option value="Toko 14">WIN25</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>RRN QRIS <span class="req">*</span></label>
+          <input type="text" id="rrn" placeholder="Masukkan RRN QRIS" required autocomplete="off">
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>Tanggal Transfer <span class="req">*</span></label>
+            <input type="date" id="tanggal" required>
+          </div>
+          <div class="form-group">
+            <label>Jam Transfer <span class="req">*</span></label>
+            <input type="time" id="jam" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Jenis QRIS <span class="req">*</span></label>
+          <select id="jenis-qris" required>
+            <option value="">-- Pilih QRIS --</option>
+            <option value="QRIS HOKI">QRIS HOKI</option>
+            <option value="QRIS FLYER">QRIS FLYER</option>
+            <option value="QRIS NEXUSPAY">QRIS NEXUSPAY</option>
+            <option value="QRIS RPAY">QRIS RPAY</option>
+            <option value="QRIS MVP">QRIS MVP</option>
+            <option value="QRIS UNOPAY">QRIS UNOPAY</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn" id="btn-submit">🚀 Kirim Laporan</button>
+      </form>
+    </div>
+
+    <div id="page-cek" class="page">
+      <div class="info-box">
+        💡 <strong>Tip:</strong> Pencarian User ID <strong>TIDAK</strong> membedakan huruf besar/kecil. Contoh: "Setan20", "SETAN20", "setan20" semua akan muncul.
+      </div>
+      <div class="form-group">
+        <label>Masukkan User ID Anda</label>
+        <input type="text" id="cek-user-id" placeholder="User ID yang digunakan saat lapor" autocomplete="off">
+      </div>
+      <button class="btn" onclick="cekStatus()">🔍 Cek Laporan Saya</button>
+      <div id="hasil-cek"></div>
+    </div>
+  </div>
+</div>
+
+<div class="drag-overlay" id="drag-overlay">
+  <div>📋 Lepas gambar di sini</div>
+  <span>Drop file gambar untuk upload</span>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+  <img id="lightbox-img" src="" alt="Bukti Transfer">
+  <div class="lightbox-caption">Klik di luar atau tekan ESC untuk menutup</div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c3RqbHVrcmZ5ZXp0Ym51dGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTgxOTksImV4cCI6MjA5NzkzNDE5OX0.mc7cOloETrfwr8jJ-kQDhHq8XEoQ-J2hfBHJKRXTvcQ';
+
+var currentFile = null;
+
+var TOKO_MAP = {
+  'Toko 1': 'WG77', 'Toko 2': 'SENSATIONAL77', 'Toko 3': 'CITRA77',
+  'Toko 4': 'MAXWIN77', 'Toko 5': 'HOKIWIN77', 'Toko 6': 'MAXWIN25',
+  'Toko 7': 'LUMBUNG138', 'Toko 8': 'SPONTAN77', 'Toko 9': 'ASIAHOKI77',
+  'Toko 10': 'MULIA77', 'Toko 11': 'BOSWIN77', 'Toko 12': 'LAUTAN77',
+  'Toko 13': 'SLOT25', 'Toko 14': 'WIN25'
+};
+
+function getTokoName(tokoValue) { return TOKO_MAP[tokoValue] || tokoValue; }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+async function supabaseQuery(endpoint, options) {
+  var url = SUPABASE_URL + '/rest/v1/' + endpoint;
+  var defaultOptions = {
+    method: 'GET',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    }
+  };
+  var finalOptions = Object.assign({}, defaultOptions, options);
+  if (options && options.headers) {
+    finalOptions.headers = Object.assign({}, defaultOptions.headers, options.headers);
+  }
+  var response = await fetch(url, finalOptions);
+  if (!response.ok) {
+    var errorText = await response.text();
+    throw new Error('HTTP ' + response.status + ': ' + errorText);
+  }
+  var text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+}
+
+function handleFile(file) {
+  if (!file.type.match('image.*')) {
+    showAlert('error', '❌ File harus berupa gambar (PNG, JPG, JPEG)');
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showAlert('error', '❌ Ukuran file terlalu besar. Maksimal 2MB');
+    return;
+  }
+  currentFile = file;
+  document.getElementById('foto-name').textContent = file.name;
+  document.querySelector('.file-upload').classList.add('has-file');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('foto-preview');
+    preview.src = e.target.result;
+    document.getElementById('preview-container').style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeFoto() {
+  currentFile = null;
+  document.getElementById('foto-preview').src = '';
+  document.getElementById('preview-container').style.display = 'none';
+  document.getElementById('foto').value = '';
+  document.getElementById('foto-name').textContent = '';
+  document.querySelector('.file-upload').classList.remove('has-file');
+  showAlert('info', '🗑️ Foto berhasil dihapus');
+}
+
+document.getElementById('foto').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+document.addEventListener('paste', function(e) {
+  var activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+    return;
+  }
+  var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      e.preventDefault();
+      var blob = items[i].getAsFile();
+      var file = new File([blob], 'pasted-image-' + Date.now() + '.png', {
+        type: 'image/png', lastModified: Date.now()
+      });
+      handleFile(file);
+      break;
+    }
+  }
+});
+
+var dragOverlay = document.getElementById('drag-overlay');
+var dragCounter = 0;
+document.addEventListener('dragenter', function(e) {
+  e.preventDefault();
+  dragCounter++;
+  dragOverlay.classList.add('active');
+});
+document.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter === 0) dragOverlay.classList.remove('active');
+});
+document.addEventListener('dragover', function(e) { e.preventDefault(); });
+document.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dragCounter = 0;
+  dragOverlay.classList.remove('active');
+  var files = e.dataTransfer.files;
+  if (files.length > 0) handleFile(files[0]);
+});
+
+function showAlert(type, message) {
+  var alertEl = document.getElementById('alert-lapor');
+  alertEl.className = 'alert ' + type;
+  alertEl.textContent = message;
+  alertEl.style.display = 'block';
+  window.scrollTo(0, 0);
+  setTimeout(function() { alertEl.style.display = 'none'; }, 5000);
+}
+
+document.getElementById('form-lapor').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  if (!currentFile) {
+    showAlert('error', '❌ Foto bukti transfer harus diupload atau di-paste');
+    return;
+  }
+  var tanggalInput = document.getElementById('tanggal').value;
+  if (!tanggalInput) {
+    showAlert('error', '❌ Tanggal transfer harus diisi');
+    return;
+  }
+  // Konversi YYYY-MM-DD ke DD/MM/YYYY
+  var parts = tanggalInput.split('-');
+  var tanggalFormatted = parts[2] + '/' + parts[1] + '/' + parts[0];
+  
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> Mengirim...';
+
+  try {
+    var file = currentFile;
+    var fileName = Date.now() + '_' + file.name.replace(/\s/g, '_');
+    var uploadUrl = SUPABASE_URL + '/storage/v1/object/bukti-qris/' + fileName;
+    var uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': file.type
+      },
+      body: file
+    });
+    if (!uploadResponse.ok) {
+      var errText = await uploadResponse.text();
+      throw new Error('Upload gagal: ' + errText);
+    }
+    var fotoUrl = SUPABASE_URL + '/storage/v1/object/public/bukti-qris/' + fileName;
+    var userId = document.getElementById('user-id').value.trim().toLowerCase();
+    
+    await supabaseQuery('laporan', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        nama_merchant: document.getElementById('nama-merchant').value.trim(),
+        toko: document.getElementById('toko').value,
+        rrn_qris: document.getElementById('rrn').value.trim(),
+        tanggal_transfer: tanggalFormatted,
+        jam_transfer: document.getElementById('jam').value,
+        jenis_qris: document.getElementById('jenis-qris').value,
+        foto_bukti: fotoUrl,
+        status: 'pending'
+      })
+    });
+    
+    showAlert('success', '✅ Laporan berhasil dikirim! Silakan cek status di menu "Cek Status"');
+    document.getElementById('form-lapor').reset();
+    document.getElementById('preview-container').style.display = 'none';
+    document.getElementById('foto-preview').src = '';
+    document.getElementById('foto-name').textContent = '';
+    document.querySelector('.file-upload').classList.remove('has-file');
+    currentFile = null;
+  } catch (err) {
+    console.error(err);
+    showAlert('error', '❌ Gagal mengirim: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Kirim Laporan';
+  }
+});
+
+async function cekStatus() {
+  var userId = document.getElementById('cek-user-id').value.trim().toLowerCase();
+  var hasilDiv = document.getElementById('hasil-cek');
+  if (!userId) {
+    hasilDiv.innerHTML = '<div class="alert error" style="display:block">Masukkan User ID terlebih dahulu</div>';
+    return;
+  }
+  hasilDiv.innerHTML = '<p style="text-align:center;padding:20px">🔄 Memuat...</p>';
+  try {
+    var query = 'laporan?select=id,user_id,nama_merchant,toko,rrn_qris,tanggal_transfer,jam_transfer,jenis_qris,foto_bukti,status,catatan_admin,created_at&user_id=ilike.*' + encodeURIComponent(userId) + '*&order=created_at.desc';
+    var data = await supabaseQuery(query);
+    if (!data || data.length === 0) {
+      hasilDiv.innerHTML = '<div class="alert info" style="display:block">Tidak ada laporan ditemukan untuk User ID "<strong>' + escapeHtml(userId) + '</strong>"</div>';
+      return;
+    }
+    hasilDiv.innerHTML = '<p style="margin-bottom:12px;color:#64748b;font-size:13px">📊 Ditemukan <strong>' + data.length + '</strong> laporan untuk User ID "<strong>' + escapeHtml(userId) + '</strong>"</p>' + data.map(renderLaporan).join('');
+  } catch (err) {
+    console.error('Cek status error:', err);
+    hasilDiv.innerHTML = '<div class="alert error" style="display:block">Error: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+document.getElementById('cek-user-id').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); cekStatus(); }
+});
+
+function openLightbox(fotoUrl) {
+  document.getElementById('lightbox-img').src = fotoUrl;
+  document.getElementById('lightbox').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox(event) {
+  if (event.target.id === 'lightbox' || event.target.className === 'lightbox-close') {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});
+
+function renderLaporan(l) {
+  var statusMap = {
+    'pending': { label: 'PENDING', class: 'badge-pending', step: 0 },
+    'on_progress': { label: 'ON PROGRESS', class: 'badge-progress', step: 1 },
+    'menunggu_h1': { label: 'MENUNGGU H+1/H+2', class: 'badge-waiting', step: 2 },
+    'sukses': { label: 'SELESAI', class: 'badge-success', step: 3 }
+  };
+  var s = statusMap[l.status] || statusMap['pending'];
+  var steps = ['Pending', 'Diproses', 'Menunggu', 'Selesai'];
+  var timeline = steps.map(function(label, i) {
+    var cls = '';
+    if (i < s.step) cls = 'done';
+    else if (i === s.step) cls = 'active';
+    return '<div class="timeline-step ' + cls + '">' +
+      '<div class="circle">' + (i < s.step ? '✓' : i+1) + '</div>' +
+      '<div class="label">' + label + '</div></div>';
+  }).join('');
+  
+  var pesanStatus = '';
+  if (l.status === 'menunggu_h1') {
+    pesanStatus = '<div class="info-box" style="margin-top:12px">⏰ <strong>Silahkan menunggu H+1 / H+2 paling lambat.</strong> Kendala Anda sedang diproses oleh bank/payment gateway.</div>';
+  }
+  if (l.status === 'sukses') {
+    pesanStatus = '<div class="alert success" style="display:block;margin-top:12px">✅ Kendala telah berhasil diselesaikan!</div>';
+  }
+  if (l.catatan_admin && l.catatan_admin.trim() !== '') {
+    pesanStatus += '<div class="info-box" style="margin-top:12px;background:#dbeafe;border-color:#3b82f6;color:#1e40af"><strong>📝 Catatan Admin:</strong> ' + escapeHtml(l.catatan_admin) + '</div>';
+  }
+  
+  var fotoHtml = '';
+  if (l.foto_bukti) {
+    fotoHtml = '<div style="margin-top:16px">' +
+      '<div class="foto-bukti-label">📷 Bukti Transfer <small style="font-weight:normal;color:#94a3b8">(klik untuk memperbesar)</small></div>' +
+      '<img src="' + escapeHtml(l.foto_bukti) + '" class="foto-bukti-thumb" onclick="openLightbox(\'' + escapeHtml(l.foto_bukti).replace(/'/g, "\\'") + '\')" alt="Bukti Transfer">' +
+    '</div>';
+  } else {
+    fotoHtml = '<div style="margin-top:16px;padding:16px;background:#f1f5f9;border-radius:8px;text-align:center;color:#64748b;font-size:13px;border:1px dashed #cbd5e1">' +
+      '🗑️ <strong>Foto bukti telah dihapus</strong><br><small>(Transaksi sudah selesai diproses)</small></div>';
+  }
+  
+  return '<div class="report-card">' +
+    '<h3>📋 Laporan - ' + escapeHtml(getTokoName(l.toko)) + '</h3>' +
+    '<span class="status-badge ' + s.class + '">' + s.label + '</span>' +
+    '<div class="timeline">' + timeline + '</div>' +
+    pesanStatus +
+    '<div class="detail-grid">' +
+      '<div class="detail-item"><div class="k">User ID</div><div class="v">' + escapeHtml(l.user_id) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Merchant</div><div class="v">' + escapeHtml(l.nama_merchant) + '</div></div>' +
+      '<div class="detail-item"><div class="k">RRN QRIS</div><div class="v">' + escapeHtml(l.rrn_qris) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Jenis QRIS</div><div class="v">' + escapeHtml(l.jenis_qris) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Tanggal</div><div class="v">' + escapeHtml(l.tanggal_transfer) + ' ' + escapeHtml(l.jam_transfer) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Dilaporkan</div><div class="v">' + new Date(l.created_at).toLocaleString('id-ID') + '</div></div>' +
+    '</div>' +
+    fotoHtml +
+  '</div>';
+}
+</script>
+
+</body>
+</html>
