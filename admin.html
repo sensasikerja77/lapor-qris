@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1e293b">
 <title>Admin - Lapor Kendala QRIS</title>
+
+<!-- ✅ TAMBAHAN BARU: Library Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
   html { -webkit-text-size-adjust: 100%; }
@@ -213,7 +217,8 @@
 <div id="login-screen">
   <div class="login-box">
     <h2>🔐 Admin Login</h2>
-    <input type="text" id="u" placeholder="Username" autocomplete="username">
+    <!-- ✅ DIUBAH: type="email" -->
+    <input type="email" id="u" placeholder="Email Admin" autocomplete="username">
     <input type="password" id="p" placeholder="Password" autocomplete="current-password">
     <button onclick="login()">Login</button>
     <p class="login-error" id="err"></p>
@@ -298,11 +303,13 @@
 </div>
 
 <script>
-var ADMIN_USER = 'admin';
-var ADMIN_PASS = 'admin123'; // ⚠️ GANTI PASSWORD INI!
+// ✅ INISIALISASI SUPABASE CLIENT
+const SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c3RqbHVrcmZ5ZXp0Ym51dGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTgxOTksImV4cCI6MjA5NzkzNDE5OX0.mc7cOloETrfwr8jJ-kQDhHq8XEoQ-J2hfBHJKRXTvcQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-var SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c3RqbHVrcmZ5ZXp0Ym51dGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTgxOTksImV4cCI6MjA5NzkzNDE5OX0.mc7cOloETrfwr8jJ-kQDhHq8XEoQ-J2hfBHJKRXTvcQ';
+// ✅ TIDAK ADA LAGI ADMIN_USER & ADMIN_PASS!
 
 var currentNoteId = null;
 
@@ -319,20 +326,69 @@ function getTokoName(tokoValue) { return TOKO_MAP[tokoValue] || tokoValue; }
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+// ✅ FUNGSI LOGIN BARU - PAKAI SUPABASE AUTH
+async function login() {
+  var email = document.getElementById('u').value.trim();
+  var password = document.getElementById('p').value;
+  var err = document.getElementById('err');
+  err.textContent = '⏳ Memproses...';
+  
+  if (!email || !password) {
+    err.textContent = '❌ Email dan password harus diisi!';
+    return;
+  }
+
+  const { error } = await db.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    err.textContent = '❌ Login gagal: ' + error.message;
+  } else {
+    err.textContent = '';
+    showDashboard();
+  }
+}
+
+// ✅ FUNGSI LOGOUT BARU
+async function logout() {
+  await db.auth.signOut();
+  location.reload();
+}
+
+// ✅ CEK SESSION SAAT HALAMAN DIBUKA
+async function checkSession() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) showDashboard();
+}
+checkSession();
+
+document.getElementById('p').onkeypress = function(e) {
+  if (e.key === 'Enter') login();
+};
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  loadReports();
+}
+
+// ✅ QUERY KE SUPABASE DENGAN TOKEN USER (BUKAN ANON KEY)
 async function supabaseQuery(endpoint, options) {
   var url = SUPABASE_URL + '/rest/v1/' + endpoint;
+  const { data: { session } } = await db.auth.getSession();
+  const authToken = session ? session.access_token : SUPABASE_KEY;
+
   var defaultOptions = {
     method: 'GET',
     headers: {
       'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Authorization': 'Bearer ' + authToken,
       'Content-Type': 'application/json',
       'Prefer': 'return=representation'
     }
@@ -356,15 +412,20 @@ function extractFilename(fotoUrl) {
   return parts[parts.length - 1];
 }
 
+// ✅ DELETE FOTO DENGAN TOKEN USER
 async function deleteFoto(fotoUrl) {
   if (!fotoUrl) return true;
   var filename = extractFilename(fotoUrl);
   if (!filename) return false;
   try {
+    const { data: { session } } = await db.auth.getSession();
     var url = SUPABASE_URL + '/storage/v1/object/bukti-qris/' + filename;
     var response = await fetch(url, {
       method: 'DELETE',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      headers: { 
+        'apikey': SUPABASE_KEY, 
+        'Authorization': 'Bearer ' + (session ? session.access_token : SUPABASE_KEY) 
+      }
     });
     return response.ok || response.status === 404;
   } catch (e) {
@@ -372,42 +433,6 @@ async function deleteFoto(fotoUrl) {
     return false;
   }
 }
-
-function login() {
-  var username = document.getElementById('u').value;
-  var password = document.getElementById('p').value;
-  var err = document.getElementById('err');
-  err.textContent = '';
-  if (!username || !password) {
-    err.textContent = '❌ Username dan password harus diisi!';
-    return;
-  }
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
-    try { localStorage.setItem('admin_logged_in', 'true'); } catch(e) {}
-    showDashboard();
-  } else {
-    err.textContent = '❌ Username atau password salah!';
-  }
-}
-
-function logout() {
-  try { localStorage.removeItem('admin_logged_in'); } catch(e) {}
-  location.reload();
-}
-
-function showDashboard() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('admin-screen').style.display = 'block';
-  loadReports();
-}
-
-try {
-  if (localStorage.getItem('admin_logged_in') === 'true') showDashboard();
-} catch(e) {}
-
-document.getElementById('p').onkeypress = function(e) {
-  if (e.key === 'Enter') login();
-};
 
 async function loadReports() {
   var status = document.getElementById('filter-status').value;
