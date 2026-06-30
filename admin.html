@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#1e293b">
 <title>Admin - Lapor Kendala QRIS</title>
 
-<!-- ✅ TAMBAHAN BARU: Library Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -165,6 +164,7 @@
   .btn-waiting { background: #fed7aa; color: #9a3412; }
   .btn-success { background: #d1fae5; color: #065f46; }
   .btn-note { background: #e0e7ff; color: #4338ca; }
+  .btn-copy { background: #d1fae5; color: #065f46; }
   .btn-delete { background: #fee2e2; color: #991b1b; }
 
   .foto-thumb {
@@ -210,6 +210,30 @@
     cursor: pointer; font-weight: 600; font-size: 14px;
   }
   .modal-actions button:active { transform: scale(0.96); }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 9999;
+    display: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .toast.show {
+    display: block;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to { translateX(-50%) translateY(0); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -217,7 +241,6 @@
 <div id="login-screen">
   <div class="login-box">
     <h2>🔐 Admin Login</h2>
-    <!-- ✅ DIUBAH: type="email" -->
     <input type="email" id="u" placeholder="Email Admin" autocomplete="username">
     <input type="password" id="p" placeholder="Password" autocomplete="current-password">
     <button onclick="login()">Login</button>
@@ -302,14 +325,13 @@
   </div>
 </div>
 
+<div class="toast" id="toast">✅ Data berhasil di-copy!</div>
+
 <script>
-// ✅ INISIALISASI SUPABASE CLIENT
 const SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c3RqbHVrcmZ5ZXp0Ym51dGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTgxOTksImV4cCI6MjA5NzkzNDE5OX0.mc7cOloETrfwr8jJ-kQDhHq8XEoQ-J2hfBHJKRXTvcQ';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ✅ TIDAK ADA LAGI ADMIN_USER & ADMIN_PASS!
 
 var currentNoteId = null;
 
@@ -330,7 +352,17 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-// ✅ FUNGSI LOGIN BARU - PAKAI SUPABASE AUTH
+// Format tanggal YYYY-MM-DD ke DD/MM/YYYY
+function formatTanggal(tanggalDB) {
+  if (!tanggalDB) return '';
+  if (tanggalDB.includes('/')) return tanggalDB;
+  var parts = tanggalDB.split('-');
+  if (parts.length === 3) {
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  return tanggalDB;
+}
+
 async function login() {
   var email = document.getElementById('u').value.trim();
   var password = document.getElementById('p').value;
@@ -355,13 +387,11 @@ async function login() {
   }
 }
 
-// ✅ FUNGSI LOGOUT BARU
 async function logout() {
   await db.auth.signOut();
   location.reload();
 }
 
-// ✅ CEK SESSION SAAT HALAMAN DIBUKA
 async function checkSession() {
   const { data: { session } } = await db.auth.getSession();
   if (session) showDashboard();
@@ -378,7 +408,6 @@ function showDashboard() {
   loadReports();
 }
 
-// ✅ QUERY KE SUPABASE DENGAN TOKEN USER (BUKAN ANON KEY)
 async function supabaseQuery(endpoint, options) {
   var url = SUPABASE_URL + '/rest/v1/' + endpoint;
   const { data: { session } } = await db.auth.getSession();
@@ -412,7 +441,6 @@ function extractFilename(fotoUrl) {
   return parts[parts.length - 1];
 }
 
-// ✅ DELETE FOTO DENGAN TOKEN USER
 async function deleteFoto(fotoUrl) {
   if (!fotoUrl) return true;
   var filename = extractFilename(fotoUrl);
@@ -479,6 +507,46 @@ function updateStats(data) {
   document.getElementById('stat-success').textContent = data.filter(function(d) { return d.status === 'sukses'; }).length;
 }
 
+// ✅ FUNGSI COPY DATA KE CLIPBOARD
+async function copyData(id) {
+  try {
+    var data = await supabaseQuery('laporan?id=eq.' + id);
+    if (!data || !data[0]) {
+      alert('❌ Data tidak ditemukan');
+      return;
+    }
+    
+    var laporan = data[0];
+    var tanggalFormatted = formatTanggal(laporan.tanggal_transfer);
+    
+    var textToCopy = 
+      'Tanggal, dan Jam: ' + tanggalFormatted + ' ' + laporan.jam_transfer + '\n' +
+      'Nama Merchant: ' + laporan.nama_merchant + '\n' +
+      'User ID Player: ' + laporan.user_id + '\n' +
+      'RRN QRIS: ' + laporan.rrn_qris;
+    
+    // Copy ke clipboard
+    await navigator.clipboard.writeText(textToCopy);
+    
+    // Tampilkan toast
+    showToast('✅ Data berhasil di-copy!');
+    
+  } catch (e) {
+    alert('❌ Gagal copy: ' + e.message);
+  }
+}
+
+// ✅ FUNGSI SHOW TOAST
+function showToast(message) {
+  var toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  
+  setTimeout(function() {
+    toast.classList.remove('show');
+  }, 2000);
+}
+
 function renderReport(r) {
   var statusMap = {
     'pending': { label: 'PENDING', class: 'badge-pending' },
@@ -487,6 +555,8 @@ function renderReport(r) {
     'sukses': { label: 'SELESAI', class: 'badge-success' }
   };
   var s = statusMap[r.status] || statusMap['pending'];
+  
+  var tanggalFormatted = formatTanggal(r.tanggal_transfer);
   
   var catatanHtml = r.catatan_admin ? 
     '<div style="grid-column:1/-1"><strong>Catatan Admin</strong>' + escapeHtml(r.catatan_admin) + '</div>' : '';
@@ -502,6 +572,7 @@ function renderReport(r) {
   if (r.status !== 'on_progress') actions += '<button class="btn-progress" onclick="updateStatus(\'' + r.id + '\',\'on_progress\')">▶️ Progress</button>';
   if (r.status !== 'menunggu_h1') actions += '<button class="btn-waiting" onclick="updateStatus(\'' + r.id + '\',\'menunggu_h1\')">⏰ H+1</button>';
   if (r.status !== 'sukses') actions += '<button class="btn-success" onclick="updateStatus(\'' + r.id + '\',\'sukses\')">✅ Sukses</button>';
+  actions += '<button class="btn-copy" onclick="copyData(\'' + r.id + '\')">📋 Copy</button>';
   actions += '<button class="btn-note" onclick="openNote(\'' + r.id + '\')">📝 Catatan</button>';
   actions += '<button class="btn-delete" onclick="deleteReport(\'' + r.id + '\')">🗑️ Hapus</button>';
   
@@ -516,7 +587,7 @@ function renderReport(r) {
     '<div class="report-detail">' +
       '<div><strong>RRN QRIS</strong>' + escapeHtml(r.rrn_qris) + '</div>' +
       '<div><strong>Jenis QRIS</strong>' + escapeHtml(r.jenis_qris) + '</div>' +
-      '<div><strong>Tanggal Transfer</strong>' + escapeHtml(r.tanggal_transfer) + ' ' + escapeHtml(r.jam_transfer) + '</div>' +
+      '<div><strong>Tanggal Transfer</strong>' + escapeHtml(tanggalFormatted) + ' ' + escapeHtml(r.jam_transfer) + '</div>' +
       catatanHtml +
     '</div>' +
     fotoHtml +
