@@ -165,6 +165,7 @@
   .btn-success { background: #d1fae5; color: #065f46; }
   .btn-note { background: #e0e7ff; color: #4338ca; }
   .btn-copy { background: #d1fae5; color: #065f46; }
+  .btn-edit { background: #fef3c7; color: #92400e; }
   .btn-delete { background: #fee2e2; color: #991b1b; }
 
   .foto-thumb {
@@ -193,18 +194,38 @@
   .modal-overlay.active { display: flex; }
   .modal {
     background: white; border-radius: 12px; padding: 20px;
-    max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;
+    max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;
   }
   @media (min-width: 640px) { .modal { border-radius: 16px; padding: 24px; } }
   .modal h3 { margin-bottom: 14px; font-size: 17px; }
   @media (min-width: 640px) { .modal h3 { font-size: 18px; margin-bottom: 16px; } }
-  .modal textarea {
-    width: 100%; padding: 12px; border: 2px solid #e2e8f0;
-    border-radius: 8px; min-height: 100px; font-family: inherit; margin-bottom: 12px;
-    font-size: 14px; resize: vertical;
+  .modal textarea, .modal input, .modal select {
+    width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0;
+    border-radius: 8px; font-family: inherit; margin-bottom: 10px;
+    font-size: 14px;
+    -webkit-appearance: none; appearance: none;
   }
-  .modal textarea:focus { outline: none; border-color: #4f46e5; }
-  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal textarea { min-height: 80px; resize: vertical; }
+  .modal textarea:focus, .modal input:focus, .modal select:focus { 
+    outline: none; border-color: #4f46e5; 
+  }
+  .modal label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+    margin-top: 4px;
+  }
+  .modal-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 500px) {
+    .modal-row { grid-template-columns: 1fr; }
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
   .modal-actions button {
     padding: 10px 18px; border: none; border-radius: 8px;
     cursor: pointer; font-weight: 600; font-size: 14px;
@@ -232,7 +253,7 @@
   }
   @keyframes slideUp {
     from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-    to { translateX(-50%) translateY(0); opacity: 1; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
 </style>
 </head>
@@ -314,18 +335,86 @@
   </div>
 </div>
 
+<!-- MODAL CATATAN -->
 <div class="modal-overlay" id="modal-note">
   <div class="modal">
     <h3>📝 Tambah Catatan Admin</h3>
     <textarea id="note-text" placeholder="Tulis catatan untuk laporan ini..."></textarea>
     <div class="modal-actions">
-      <button onclick="closeModal()" style="background:#e2e8f0">Batal</button>
+      <button onclick="closeModal('modal-note')" style="background:#e2e8f0">Batal</button>
       <button onclick="saveNote()" style="background:#4f46e5;color:white">Simpan</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast">✅ Data berhasil di-copy!</div>
+<!-- MODAL EDIT -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h3>✏️ Edit Laporan</h3>
+    <input type="hidden" id="edit-id">
+    
+    <label>Nama Merchant</label>
+    <input type="text" id="edit-nama-merchant" placeholder="Nama Merchant">
+    
+    <label>User ID Player</label>
+    <input type="text" id="edit-user-id" placeholder="User ID">
+    
+    <label>Pilih Toko</label>
+    <select id="edit-toko">
+      <option value="Toko 1">WG77</option>
+      <option value="Toko 2">SENSATIONAL77</option>
+      <option value="Toko 3">CITRA77</option>
+      <option value="Toko 4">MAXWIN77</option>
+      <option value="Toko 5">HOKIWIN77</option>
+      <option value="Toko 6">MAXWIN25</option>
+      <option value="Toko 7">LUMBUNG138</option>
+      <option value="Toko 8">SPONTAN77</option>
+      <option value="Toko 9">ASIAHOKI77</option>
+      <option value="Toko 10">MULIA77</option>
+      <option value="Toko 11">BOSWIN77</option>
+      <option value="Toko 12">LAUTAN77</option>
+      <option value="Toko 13">SLOT25</option>
+      <option value="Toko 14">WIN25</option>
+    </select>
+    
+    <label>RRN QRIS</label>
+    <input type="text" id="edit-rrn" placeholder="RRN QRIS">
+    
+    <label>Jenis QRIS</label>
+    <select id="edit-jenis-qris">
+      <option value="QRIS HOKI">QRIS HOKI</option>
+      <option value="QRIS FLYER">QRIS FLYER</option>
+      <option value="QRIS NEXUSPAY">QRIS NEXUSPAY</option>
+      <option value="QRIS RPAY">QRIS RPAY</option>
+      <option value="QRIS MVP">QRIS MVP</option>
+      <option value="QRIS UNOPAY">QRIS UNOPAY</option>
+    </select>
+    
+    <div class="modal-row">
+      <div>
+        <label>Tanggal Transfer</label>
+        <input type="date" id="edit-tanggal">
+      </div>
+      <div>
+        <label>Jam Transfer</label>
+        <input type="time" id="edit-jam">
+      </div>
+    </div>
+    
+    <label>Nominal</label>
+    <input type="text" id="edit-nominal" placeholder="Contoh: 50000">
+    
+    <label>Catatan Admin</label>
+    <textarea id="edit-catatan" placeholder="Catatan admin..."></textarea>
+    
+    <div class="modal-actions">
+      <button onclick="closeModal('modal-edit')" style="background:#e2e8f0">Batal</button>
+      <button onclick="saveEdit()" style="background:#4f46e5;color:white">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Berhasil!</div>
 
 <script>
 const SUPABASE_URL = 'https://gvstjlukrfyeztbnutdd.supabase.co';
@@ -361,6 +450,14 @@ function formatTanggal(tanggalDB) {
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
   return tanggalDB;
+}
+
+// Format nominal dengan titik ribuan
+function formatNominal(nominal) {
+  if (!nominal) return '-';
+  var num = String(nominal).replace(/[^\d]/g, '');
+  if (!num) return '-';
+  return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 async function login() {
@@ -507,7 +604,7 @@ function updateStats(data) {
   document.getElementById('stat-success').textContent = data.filter(function(d) { return d.status === 'sukses'; }).length;
 }
 
-// ✅ FUNGSI COPY DATA KE CLIPBOARD
+// ✅ COPY DATA + NOMINAL
 async function copyData(id) {
   try {
     var data = await supabaseQuery('laporan?id=eq.' + id);
@@ -518,17 +615,16 @@ async function copyData(id) {
     
     var laporan = data[0];
     var tanggalFormatted = formatTanggal(laporan.tanggal_transfer);
+    var nominalFormatted = formatNominal(laporan.nominal);
     
     var textToCopy = 
       'Tanggal, dan Jam: ' + tanggalFormatted + ' ' + laporan.jam_transfer + '\n' +
       'Nama Merchant: ' + laporan.nama_merchant + '\n' +
       'User ID Player: ' + laporan.user_id + '\n' +
-      'RRN QRIS: ' + laporan.rrn_qris;
+      'RRN QRIS: ' + laporan.rrn_qris + '\n' +
+      'Nominal: ' + nominalFormatted;
     
-    // Copy ke clipboard
     await navigator.clipboard.writeText(textToCopy);
-    
-    // Tampilkan toast
     showToast('✅ Data berhasil di-copy!');
     
   } catch (e) {
@@ -536,15 +632,88 @@ async function copyData(id) {
   }
 }
 
-// ✅ FUNGSI SHOW TOAST
+// ✅ EDIT DATA
+async function openEdit(id) {
+  try {
+    var data = await supabaseQuery('laporan?id=eq.' + id);
+    if (!data || !data[0]) {
+      alert('❌ Data tidak ditemukan');
+      return;
+    }
+    
+    var laporan = data[0];
+    
+    document.getElementById('edit-id').value = laporan.id;
+    document.getElementById('edit-nama-merchant').value = laporan.nama_merchant || '';
+    document.getElementById('edit-user-id').value = laporan.user_id || '';
+    document.getElementById('edit-toko').value = laporan.toko || 'Toko 1';
+    document.getElementById('edit-rrn').value = laporan.rrn_qris || '';
+    document.getElementById('edit-jenis-qris').value = laporan.jenis_qris || 'QRIS HOKI';
+    document.getElementById('edit-tanggal').value = laporan.tanggal_transfer || '';
+    document.getElementById('edit-jam').value = laporan.jam_transfer || '';
+    document.getElementById('edit-nominal').value = laporan.nominal || '';
+    document.getElementById('edit-catatan').value = laporan.catatan_admin || '';
+    
+    document.getElementById('modal-edit').classList.add('active');
+    
+  } catch (e) {
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+async function saveEdit() {
+  var id = document.getElementById('edit-id').value;
+  if (!id) {
+    alert('❌ ID laporan tidak ditemukan');
+    return;
+  }
+  
+  var tanggalInput = document.getElementById('edit-tanggal').value;
+  var tanggalFormatted = tanggalInput;
+  if (tanggalInput && !tanggalInput.includes('/')) {
+    var parts = tanggalInput.split('-');
+    if (parts.length === 3) {
+      tanggalFormatted = parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+  }
+  
+  try {
+    await supabaseQuery('laporan?id=eq.' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        nama_merchant: document.getElementById('edit-nama-merchant').value.trim(),
+        user_id: document.getElementById('edit-user-id').value.trim().toLowerCase(),
+        toko: document.getElementById('edit-toko').value,
+        rrn_qris: document.getElementById('edit-rrn').value.trim(),
+        jenis_qris: document.getElementById('edit-jenis-qris').value,
+        tanggal_transfer: tanggalFormatted,
+        jam_transfer: document.getElementById('edit-jam').value,
+        nominal: document.getElementById('edit-nominal').value.trim(),
+        catatan_admin: document.getElementById('edit-catatan').value.trim(),
+        updated_at: new Date().toISOString()
+      })
+    });
+    
+    closeModal('modal-edit');
+    showToast('✅ Data berhasil diupdate!');
+    loadReports();
+    
+  } catch (e) {
+    alert('❌ Error: ' + e.message);
+  }
+}
+
 function showToast(message) {
   var toast = document.getElementById('toast');
   toast.textContent = message;
   toast.classList.add('show');
-  
   setTimeout(function() {
     toast.classList.remove('show');
   }, 2000);
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
 }
 
 function renderReport(r) {
@@ -557,6 +726,7 @@ function renderReport(r) {
   var s = statusMap[r.status] || statusMap['pending'];
   
   var tanggalFormatted = formatTanggal(r.tanggal_transfer);
+  var nominalFormatted = formatNominal(r.nominal);
   
   var catatanHtml = r.catatan_admin ? 
     '<div style="grid-column:1/-1"><strong>Catatan Admin</strong>' + escapeHtml(r.catatan_admin) + '</div>' : '';
@@ -573,6 +743,7 @@ function renderReport(r) {
   if (r.status !== 'menunggu_h1') actions += '<button class="btn-waiting" onclick="updateStatus(\'' + r.id + '\',\'menunggu_h1\')">⏰ H+1</button>';
   if (r.status !== 'sukses') actions += '<button class="btn-success" onclick="updateStatus(\'' + r.id + '\',\'sukses\')">✅ Sukses</button>';
   actions += '<button class="btn-copy" onclick="copyData(\'' + r.id + '\')">📋 Copy</button>';
+  actions += '<button class="btn-edit" onclick="openEdit(\'' + r.id + '\')">✏️ Edit</button>';
   actions += '<button class="btn-note" onclick="openNote(\'' + r.id + '\')">📝 Catatan</button>';
   actions += '<button class="btn-delete" onclick="deleteReport(\'' + r.id + '\')">🗑️ Hapus</button>';
   
@@ -587,6 +758,7 @@ function renderReport(r) {
     '<div class="report-detail">' +
       '<div><strong>RRN QRIS</strong>' + escapeHtml(r.rrn_qris) + '</div>' +
       '<div><strong>Jenis QRIS</strong>' + escapeHtml(r.jenis_qris) + '</div>' +
+      '<div><strong>Nominal</strong>' + escapeHtml(nominalFormatted) + '</div>' +
       '<div><strong>Tanggal Transfer</strong>' + escapeHtml(tanggalFormatted) + ' ' + escapeHtml(r.jam_transfer) + '</div>' +
       catatanHtml +
     '</div>' +
@@ -633,10 +805,6 @@ async function openNote(id) {
   }
 }
 
-function closeModal() {
-  document.getElementById('modal-note').classList.remove('active');
-}
-
 async function saveNote() {
   var note = document.getElementById('note-text').value;
   if (!currentNoteId) {
@@ -648,7 +816,8 @@ async function saveNote() {
       method: 'PATCH',
       body: JSON.stringify({ catatan_admin: note, updated_at: new Date().toISOString() })
     });
-    closeModal();
+    closeModal('modal-note');
+    showToast('✅ Catatan berhasil disimpan!');
     loadReports();
   } catch (e) {
     alert('Error: ' + e.message);
