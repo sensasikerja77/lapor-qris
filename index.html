@@ -553,6 +553,11 @@
         </div>
 
         <div class="form-group">
+          <label>Nominal <span class="req">*</span></label>
+          <input type="text" id="nominal" placeholder="Contoh: 50000" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
           <label>Jenis QRIS <span class="req">*</span></label>
           <select id="jenis-qris" required>
             <option value="">-- Pilih QRIS --</option>
@@ -610,17 +615,21 @@ var TOKO_MAP = {
 
 function getTokoName(tokoValue) { return TOKO_MAP[tokoValue] || tokoValue; }
 
-// Konversi tanggal YYYY-MM-DD ke DD/MM/YYYY untuk tampilan
 function formatTanggal(tanggalDB) {
   if (!tanggalDB) return '';
-  // Kalau sudah format DD/MM/YYYY, return apa adanya
   if (tanggalDB.includes('/')) return tanggalDB;
-  // Konversi YYYY-MM-DD ke DD/MM/YYYY
   var parts = tanggalDB.split('-');
   if (parts.length === 3) {
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
   return tanggalDB;
+}
+
+function formatNominal(nominal) {
+  if (!nominal) return '-';
+  var num = String(nominal).replace(/[^\d]/g, '');
+  if (!num) return '-';
+  return 'Rp ' + num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function escapeHtml(str) {
@@ -760,7 +769,6 @@ document.getElementById('form-lapor').addEventListener('submit', async function(
     showAlert('error', '❌ Tanggal transfer harus diisi');
     return;
   }
-  // Simpan tanggal dalam format YYYY-MM-DD (format PostgreSQL)
   var tanggalFormatted = tanggalInput;
   
   var btn = document.getElementById('btn-submit');
@@ -797,6 +805,7 @@ document.getElementById('form-lapor').addEventListener('submit', async function(
         tanggal_transfer: tanggalFormatted,
         jam_transfer: document.getElementById('jam').value,
         jenis_qris: document.getElementById('jenis-qris').value,
+        nominal: document.getElementById('nominal').value.trim(),
         foto_bukti: fotoUrl,
         status: 'pending'
       })
@@ -827,7 +836,7 @@ async function cekStatus() {
   }
   hasilDiv.innerHTML = '<p style="text-align:center;padding:20px">🔄 Memuat...</p>';
   try {
-    var query = 'laporan?select=id,user_id,nama_merchant,toko,rrn_qris,tanggal_transfer,jam_transfer,jenis_qris,foto_bukti,status,catatan_admin,created_at&user_id=ilike.*' + encodeURIComponent(userId) + '*&order=created_at.desc';
+    var query = 'laporan?select=id,user_id,nama_merchant,toko,rrn_qris,tanggal_transfer,jam_transfer,jenis_qris,nominal,foto_bukti,status,catatan_admin,created_at&user_id=ilike.*' + encodeURIComponent(userId) + '*&order=created_at.desc';
     var data = await supabaseQuery(query);
     if (!data || data.length === 0) {
       hasilDiv.innerHTML = '<div class="alert info" style="display:block">Tidak ada laporan ditemukan untuk User ID "<strong>' + escapeHtml(userId) + '</strong>"</div>';
@@ -904,8 +913,8 @@ function renderLaporan(l) {
       '🗑️ <strong>Foto bukti telah dihapus</strong><br><small>(Transaksi sudah selesai diproses)</small></div>';
   }
   
-  // Format tanggal ke DD/MM/YYYY untuk tampilan
   var tanggalDisplay = formatTanggal(l.tanggal_transfer);
+  var nominalDisplay = formatNominal(l.nominal);
   
   return '<div class="report-card">' +
     '<h3>📋 Laporan - ' + escapeHtml(getTokoName(l.toko)) + '</h3>' +
@@ -918,6 +927,7 @@ function renderLaporan(l) {
       '<div class="detail-item"><div class="k">RRN QRIS</div><div class="v">' + escapeHtml(l.rrn_qris) + '</div></div>' +
       '<div class="detail-item"><div class="k">Jenis QRIS</div><div class="v">' + escapeHtml(l.jenis_qris) + '</div></div>' +
       '<div class="detail-item"><div class="k">Tanggal</div><div class="v">' + escapeHtml(tanggalDisplay) + ' ' + escapeHtml(l.jam_transfer) + '</div></div>' +
+      '<div class="detail-item"><div class="k">Nominal</div><div class="v">' + escapeHtml(nominalDisplay) + '</div></div>' +
       '<div class="detail-item"><div class="k">Dilaporkan</div><div class="v">' + new Date(l.created_at).toLocaleString('id-ID') + '</div></div>' +
     '</div>' +
     fotoHtml +
